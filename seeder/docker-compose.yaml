@@ -1,0 +1,8 @@
+version: '3'
+services:
+  eews-seeder:
+    build:
+      context: .
+    container_name: eews-seeder
+    env_file:
+      - .env

@@ -1,0 +1,32 @@
+[
+  {
+    "code": "JAGI",
+    "lat": "-8.4702",
+    "long": "114.1521",
+    "elevation": "171",
+    "name": "GEOFON Station GEOFON Station Jajag, Java",
+    "channels": [
+      {
+        "code": "BHN",
+        "depth": 0.0,
+        "azimuth": 0.0,
+        "dip": 0.0,
+        "sample_rate": 20.0
+      },
+      {
+        "code": "BHE",
+        "depth": 0.0,
+        "azimuth": 90.0,
+        "dip": 0.0,
+        "sample_rate": 20.0
+      },
+      {
+        "code": "BHZ",
+        "depth": 0.0,
+        "azimuth": 0.0,
+        "dip": -90.0,
+        "sample_rate": 20.0
+      }
+    ]
+  }
+]

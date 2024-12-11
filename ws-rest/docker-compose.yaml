@@ -1,0 +1,11 @@
+version: '3'
+services:
+  eews-ws-rest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eews-ws-rest
+    env_file:
+      - .env
+    ports:
+      - '8080:8080'

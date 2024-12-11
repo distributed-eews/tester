@@ -1,0 +1,217 @@
+version: '3'
+services:
+  # redis:
+  #   image: redis
+  #   command: redis-server --requirepass eews2024zat1234XyZ
+  #   container_name: redis
+  #   volumes:
+  #     - redis_data:/data
+  #   ports:
+  #     - '6379:6379'
+
+  # eews-mongo:
+  #   image: mongo:latest
+  #   container_name: eews-mongo
+  #   volumes:
+  #     - mongodb_data:/data/db
+  #   ports:
+  #     - '27017:27017'
+  #   environment:
+  #     - MONGO_INITDB_DATABASE=eews
+  #     - MONGO_INITDB_ROOT_USERNAME=eews
+  #     - MONGO_INITDB_ROOT_PASSWORD=eews12345
+
+  # zookeeper:
+  #   restart: always
+  #   image: confluentinc/cp-zookeeper
+  #   container_name: zookeeper1
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_SERVER_ID: 1
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #     ZOOKEEPER_SERVERS: zookeeper:2888:3888
+  #   ports:
+  #     - '12181:2181'
+  #   mem_limit: 1g
+
+  # kafka:
+  #   restart: always
+  #   container_name: kafka
+  #   image: confluentinc/cp-kafka
+  #   ports:
+  #     - '29091:29091'
+  #     - '39091:39091'
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+  #     KAFKA_LISTENERS: INTERNAL://kafka:39091,EXTERNAL://kafka:29091
+  #     KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:39091,EXTERNAL://localhost:29091
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+  #     KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+  #   mem_limit: 1.2g
+  # init-kafka:
+  #   container_name: init-kafka
+  #   image: confluentinc/cp-kafka:6.1.1
+  #   entrypoint: ['/bin/sh', '-c']
+  #   command: |
+  #     "
+  #     # Blocks until Kafka is reachable
+  #     kafka-topics --bootstrap-server $$KAFKA_SERVER --list
+  #     echo -e 'Creating kafka topics'
+  #     kafka-topics --bootstrap-server $$KAFKA_SERVER --create --if-not-exists --topic __consumer_offsets --replication-factor 1 --partitions 50
+  #     kafka-topics --bootstrap-server $$KAFKA_SERVER --create --if-not-exists --topic query --replication-factor 1 --partitions 3 --config segment.bytes=150000 --config retention.bytes=3000000 --config retention.ms=120000
+  #     kafka-topics --bootstrap-server $$KAFKA_SERVER --create --if-not-exists --topic p_arrival --replication-factor 1 --partitions 3 --config segment.bytes=150000 --config retention.bytes=3000000 --config retention.ms=120000
+  #     kafka-topics --bootstrap-server $$KAFKA_SERVER --create --if-not-exists --topic pick --replication-factor 1 --partitions 3 --config segment.bytes=150000 --config retention.bytes=3000000 --config retention.ms=120000
+  #     echo -e 'Successfully created the following topics:'
+  #     kafka-topics --bootstrap-server $$KAFKA_SERVER --list
+  #     "
+  #   environment:
+  #     KAFKA_SERVER: kafka:39091
+
+  # seeder:
+  #   container_name: seeder
+  #   build:
+  #     context: ./seeder
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     redis:
+  #       condition: service_started
+  #   environment:
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     REDIS_PASSWORD: eews2024zat1234XyZ
+  #     ENV: TEST
+  #     REPLICAS: 9
+
+  # producer:
+  #   restart: always
+  #   container_name: producer
+  #   build:
+  #     context: ./producer-tester
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     init-kafka:
+  #       condition: service_completed_successfully
+  #     redis:
+  #       condition: service_started
+  #   environment:
+  #     BOOTSTRAP_SERVER: kafka:39091
+  #     TOPIC_NAME: query
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     REDIS_PASSWORD: eews2024zat1234XyZ
+  #     PORT: 8000
+  #     PROMETHEUS_PORT: 8001
+  #     REPLICAS: 9
+  #   ports:
+  #     - '8000:8000'
+  #     - '8001:8001'
+  #   mem_limit: 1g
+
+  # queue:
+  #   restart: always
+  #   container_name: queue
+  #   build:
+  #     context: ./queue
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     init-kafka:
+  #       condition: service_completed_successfully
+  #     redis:
+  #       condition: service_started
+  #   environment:
+  #     BOOTSTRAP_SERVERS: kafka:39091
+  #     TOPIC_CONSUMER: query
+  #     TOPIC_PRODUCER: p_arrival
+  #     PROMETHEUS_PORT: 8002
+  #   ports:
+  #     - '8002:8002'
+
+  # ml:
+  #   restart: always
+  #   container_name: ml
+  #   image: pragusga/eews:ml-v1
+  #   environment:
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #     - REDIS_PASSWORD=eews2024zat1234XyZ
+  #   ports:
+  #     - '3001:3000'
+  #   depends_on:
+  #     - redis
+  #   mem_limit: 7g
+
+  # picker:
+  #   restart: always
+  #   container_name: picker
+  #   build:
+  #     context: ./picker
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     init-kafka:
+  #       condition: service_completed_successfully
+  #     redis:
+  #       condition: service_started
+  #     eews-mongo:
+  #       condition: service_started
+  #     ml:
+  #       condition: service_started
+  #   environment:
+  #     BOOTSTRAP_SERVERS: kafka:39091
+  #     TOPIC_CONSUMER: p_arrival
+  #     TOPIC_PRODUCER: pick
+  #     PROMETHEUS_PORT: 8003
+  #     MONGO_HOST: eews-mongo
+  #     MONGO_PORT: 27017
+  #     MONGO_DB: eews
+  #     MONGO_USER: eews
+  #     MONGO_PASSWORD: eews12345
+  #     ML_URL: http://ml:3000
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     REDIS_PASSWORD: eews2024zat1234XyZ
+  #   ports:
+  #     - '8003:8003'
+
+  # ws-rest:
+  #   restart: always
+  #   container_name: ws-rest
+  #   build:
+  #     context: ./ws-rest
+  #     dockerfile: Dockerfile
+  #   depends_on:
+  #     init-kafka:
+  #       condition: service_completed_successfully
+  #     redis:
+  #       condition: service_started
+  #   environment:
+  #     BOOTSTRAP_SERVERS: kafka:39091
+  #     TOPIC_CONSUMER: p_arrival
+  #     TOPIC_PS_CONSUMER: pick
+  #     PORT: 8004
+  #     PRODUCER_SERVICE: picker:8003
+  #     REDIS_HOST: redis:6379
+  #     REDIS_PASSWORD: eews2024zat1234XyZ
+  #   ports:
+  #     - '8004:8004'
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus:/prometheus
+
+  grafana:
+    hostname: grafana
+    image: grafana/grafana
+    environment:
+      - GF_SERVER_HTTP_PORT=8080
+    ports:
+      - 8080:8080
+volumes:
+  prometheus:
+#   redis_data:
+#   mongodb_data:

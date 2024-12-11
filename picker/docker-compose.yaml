@@ -1,0 +1,23 @@
+version: '3'
+services:
+  eews-picker-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eews-picker-1
+    env_file:
+      - .env
+  eews-picker-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eews-picker-2
+    env_file:
+      - .env
+  eews-picker-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eews-picker-3
+    env_file:
+      - .env

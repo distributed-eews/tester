@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s # when Prometheus is pulling data from exporters etc
+  evaluation_interval: 30s # time between each evaluation of Prometheus' alerting rules
+
+scrape_configs:
+  - job_name: picker
+    static_configs:
+      - targets:
+          - 35.231.191.131:8090
+          - 35.229.16.35:8090
+          - 34.148.119.251:8090
+  - job_name: producer
+    static_configs:
+      - targets:
+          - 35.245.202.20:8090
+  - job_name: queue
+    static_configs:
+      - targets:
+          - 34.75.215.138:8090
+          - 34.48.93.80:8090
+          - 34.86.157.142:8090
+  - job_name: ws-rest
+    static_configs:
+      - targets:
+          - 34.48.17.118:80

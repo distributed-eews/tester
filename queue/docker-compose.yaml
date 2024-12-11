@@ -1,0 +1,23 @@
+version: '3'
+services:
+  eews-queue-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eews-queue-1
+    env_file:
+      - .env
+  eews-queue-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eews-queue-2
+    env_file:
+      - .env
+  eews-queue-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: eews-queue-3
+    env_file:
+      - .env

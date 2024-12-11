@@ -1,0 +1,74 @@
+version: '3'
+services:
+  picker:
+#    image: pragusga/eews:picker-v1
+    image: pragusga/eews:pickert  
+    container_name: picker1
+    environment:
+      - BOOTSTRAP_SERVERS=10.128.0.8:29091,10.128.0.9:29091,10.128.0.10:29091
+      - TOPIC_CONSUMER=p_arrival
+      - TOPIC_PRODUCER=picker
+      - ML_URL=http://10.142.0.5:80 # gunakan url load balancer jika memakai load balancer
+      - REDIS_HOST=10.128.0.4
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=eews2024zat1234XyZ
+      - MONGO_DB=eews
+      - MONGO_HOST=10.128.0.3
+      - MONGO_PORT=27017
+      - MONGO_USER=eews2024
+      - MONGO_PASSWORD=eewsZaTFas1L24
+      - PROMETHEUS_PORT=8003
+    mem_limit: 512m
+    ports:
+      - '8090:8090'
+
+version: '3'
+services:
+  queue:
+    restart: always
+    container_name: queue1
+#    image: pragusga/eews:queue-v1
+    image: pragusga/eews:queuet
+    environment:
+      - BOOTSTRAP_SERVERS=10.128.0.8:29091,10.128.0.9:29091,10.128.0.10:29091
+      - TOPIC_CONSUMER=query
+      - TOPIC_PRODUCER=p_arrival
+      - PROMETHEUS_PORT=8090
+    ports:
+      - '8090:8090'
+
+version: '3'
+services:
+  producer:
+    restart: always
+    container_name: producer
+    image: pragusga/eews:producert
+    environment:
+      BOOTSTRAP_SERVER: 10.128.0.8:29091,10.128.0.9:29091,10.128.0.10:29091
+      TOPIC_NAME: query
+      REDIS_HOST: 10.128.0.4
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: eews2024zat1234XyZ
+      PORT: 8090
+      PROMETHEUS_PORT: 8090
+      REPLICAS: 9
+    ports:
+      - '8090:8090'
+    mem_limit: 1g
+
+version: '3'
+services:
+  ws-rest:
+    restart: always
+    image: pragusga/eews:ws-restt
+    container_name: ws-rest
+    environment:
+      BOOTSTRAP_SERVERS: kafka:39091
+      TOPIC_CONSUMER: p_arrival
+      TOPIC_PS_CONSUMER: pick
+      PORT: 8003
+      PRODUCER_SERVICE: 10.150.0.4:8090
+      REDIS_HOST: 10.128.0.4:6379
+      REDIS_PASSWORD: eews2024zat1234XyZ
+    ports:
+      - '80:8083'
